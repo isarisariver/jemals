@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jemals</title>
+<link rel="stylesheet" href="newtab.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+<div id="app">
+  <div class="top-bar">
+    <span class="clock" id="clock"></span>
+    <input id="search" type="text" placeholder="Lesezeichen durchsuchen…" />
+    <button id="btn-new-folder">+ Neuer Ordner</button>
+    <button id="btn-settings" title="Einstellungen">⚙️</button>
+    <button id="btn-help" title="Hilfe">?</button>
+  </div>
+  <div id="dashboard"><div id="loading">Lesezeichen werden geladen…</div></div>
+</div>
+
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-rename">Umbenennen</div>
+  <div class="ctx-item" id="ctx-edit-url" style="display:none">URL ändern</div>
+  <div class="ctx-item" id="ctx-change-icon" style="display:none">Icon ändern…</div>
+  <div class="ctx-item" id="ctx-reset-icon" style="display:none">Icon zurücksetzen</div>
+  <div class="ctx-item" id="ctx-open-all" style="display:none">Alle öffnen</div>
+  <div class="ctx-item" id="ctx-sort" style="display:none">Alphabetisch sortieren</div>
+  <div class="ctx-item" id="ctx-color" style="display:none">Farbe ändern…</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" id="ctx-delete">Löschen</div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="modal-cancel">Abbrechen</button>
+      <button class="btn btn-confirm" id="modal-confirm">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-overlay">
+  <div id="settings-modal">
+    <div id="settings-header">
+      <h3 id="settings-title">Einstellungen</h3>
+      <button id="settings-close">✕</button>
+    </div>
+    <div id="settings-body">
+
+      <!-- Theme -->
+      <div class="settings-section">
+        <div class="settings-section-title" id="st-appearance">Erscheinungsbild</div>
+        <div class="settings-row">
+          <label class="settings-label" id="st-theme">Theme</label>
+          <select class="settings-select" id="settings-theme">
+            <option value="light">☀️ Light</option>
+            <option value="slate">🌙 Slate</option>
+            <option value="warm">🟤 Warm</option>
+            <option value="black">⬛ Black</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <label class="settings-label" id="st-lang">Sprache</label>
+          <select class="settings-select" id="settings-lang">
+            <option value="auto">🌐 Auto</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="es">🇪🇸 Español</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Uhrzeit -->
+      <div class="settings-section">
+        <div class="settings-section-title" id="st-clock-section">Uhrzeit</div>
+        <div class="settings-row">
+          <label class="settings-label" id="st-clock-format">Format</label>
+          <div class="settings-toggle-group">
+            <button class="toggle-btn active" id="toggle-24h">24h</button>
+            <button class="toggle-btn" id="toggle-12h">12h</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verhalten -->
+      <div class="settings-section">
+        <div class="settings-section-title" id="st-behavior">Verhalten</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label" id="st-open-tab">Links öffnen</div>
+            <div class="settings-hint" id="st-open-tab-hint">Im gleichen oder einem neuen Tab</div>
+          </div>
+          <div class="settings-toggle-group">
+            <button class="toggle-btn active" id="toggle-same-tab">Gleicher Tab</button>
+            <button class="toggle-btn" id="toggle-new-tab">Neuer Tab</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label" id="st-animations">Animationen</div>
+            <div class="settings-hint" id="st-animations-hint">Ordner öffnen/schließen animieren</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-animations" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Sektionen -->
+      <div class="settings-section">
+        <div class="settings-section-title" id="st-sections">Sektionen</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label" id="st-recently-visited">Zuletzt besucht</div>
+            <div class="settings-hint" id="st-recently-visited-hint">Zeigt kürzlich besuchte Seiten oben an</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-recent">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label" id="st-default-folder">Standard-Ordner</div>
+            <div class="settings-hint" id="st-default-folder-hint">Standardmäßig aufgeklappter Ordner</div>
+          </div>
+          <select class="settings-select" id="settings-default-folder">
+            <option value="1">Bookmarks Bar</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ordner ausblenden -->
+      <div class="settings-section">
+        <div class="settings-section-title" id="st-hidden-folders">Ordner ausblenden</div>
+        <div class="settings-hint" style="padding: 0 0 12px" id="st-hidden-folders-hint">Ausgeblendete Ordner werden nicht angezeigt</div>
+        <div id="settings-folder-list">
+          <!-- Wird dynamisch befüllt -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-overlay">
+  <div id="help-modal">
+    <div id="help-header">
+      <h3>Jemals — Übersicht</h3>
+      <button id="help-close">✕</button>
+    </div>
+    <div id="help-body">
+      <div class="help-section">
+        <div class="help-icon">🖱️</div>
+        <div>
+          <div class="help-title">Navigieren</div>
+          <div class="help-desc">Klick auf einen Ordner-Header öffnet ihn (alle anderen klappen zu). Nochmal klicken schließt ihn wieder.</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">✋</div>
+        <div>
+          <div class="help-title">Drag & Drop</div>
+          <div class="help-desc">Bookmarks innerhalb und zwischen Ordnern verschieben. Ordner-Reihenfolge durch Ziehen am Header ändern.</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">🖱️²</div>
+        <div>
+          <div class="help-title">Rechtsklick auf Bookmark</div>
+          <div class="help-desc">Umbenennen · URL ändern · Icon ändern · Icon zurücksetzen · Löschen</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">🖱️²</div>
+        <div>
+          <div class="help-title">Rechtsklick auf Ordner</div>
+          <div class="help-desc">Umbenennen · Alle Bookmarks auf einmal öffnen · Alphabetisch sortieren · Farbe ändern · Löschen</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">⌨️</div>
+        <div>
+          <div class="help-title">Keyboard Shortcuts</div>
+          <div class="help-desc"><kbd>/</kbd> Suche fokussieren &nbsp;·&nbsp; <kbd>Esc</kbd> Suche leeren</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">🎨</div>
+        <div>
+          <div class="help-title">Themes</div>
+          <div class="help-desc">Light · Slate · Warm · True Black — in den Einstellungen änderbar.</div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-icon">🖼️</div>
+        <div>
+          <div class="help-title">Custom Icons</div>
+          <div class="help-desc">Rechtsklick auf ein Bookmark → "Icon ändern" — eigenes Bild hochladen. Wird lokal gespeichert.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script type="module" src="init.js"></script>
+</body>
+</html>

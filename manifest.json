@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Jemals",
+  "version": "1.0",
+  "description": "Alle Lesezeichen, die du jemals gespeichert hast.",
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "favicon"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "optional_permissions": [
+    "history"
+  ]
+}
