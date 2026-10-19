@@ -5,7 +5,10 @@ import { saveSectionOrder } from './tree.js';
 
 // render() wird von init.js übergeben (vermeidet zirkulären Import)
 let render = () => {};
-export function initDrag({ render: renderFn }) { render = renderFn; }
+export function initDrag({ render: renderFn }) {
+  render = renderFn;
+  initSectionDrop();
+}
 const rerender = () => render(state.currentFilter);
 
 // ─── Drag Ghost ───────────────────────────────────────────
@@ -51,6 +54,75 @@ function takeDraggedBookmark() {
 }
 
 // ─── Sektionen umsortieren (Drag am Header) ───────────────
+// Transparentes 1x1-GIF, vorgeladen, als unsichtbares natives Drag-Bild
+const blankDragImg = new Image();
+blankDragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+// Ghost, der dem Mauszeiger folgt
+const secGhost = document.createElement('div');
+secGhost.id = 'sec-ghost';
+document.body.appendChild(secGhost);
+
+// Einfügelinie in der Lücke zwischen den Ordnern
+const secDropLine = document.createElement('div');
+secDropLine.id = 'sec-drop-line';
+document.body.appendChild(secDropLine);
+
+function moveSecGhost(e) {
+  // Drag-Events können ohne gültige Position (0/0) kommen: ignorieren, sonst
+  // erscheint der Ghost kurz in der Ecke und springt dann zum Zeiger.
+  if (e.clientX === 0 && e.clientY === 0) return;
+  secGhost.style.left = (e.clientX + 16) + 'px';
+  secGhost.style.top  = (e.clientY + 16) + 'px';
+  secGhost.style.display = 'flex'; // erst jetzt sichtbar
+}
+
+function showSecGhost(sec, e) {
+  secGhost.style.borderLeftColor = sec.color;
+  const title = document.createElement('span');
+  title.className = 'sec-ghost-title';
+  title.textContent = sec.title;
+  const count = document.createElement('span');
+  count.className = 'sec-ghost-count';
+  count.textContent = sec.bookmarks.length;
+  secGhost.replaceChildren(title, count);
+  secGhost.style.display = 'none';
+  moveSecGhost(e); // zeigt den Ghost nur bei gültiger Position
+  // Position auch über Lücken und anderen Elementen nachführen
+  document.addEventListener('dragover', moveSecGhost, true);
+}
+
+function hideSecDrag() {
+  secGhost.style.display = 'none';
+  secDropLine.style.display = 'none';
+  document.removeEventListener('dragover', moveSecGhost, true);
+}
+
+// Einfügeposition anhand der Mausposition: vor dem ersten Ordner, dessen Mitte
+// unter dem Zeiger liegt, sonst hinter den letzten. Funktioniert auch in den Lücken.
+function getSectionInsertion(container, y) {
+  const secs = [...container.querySelectorAll('.section[data-sec-id]')]
+    .filter(el => el.dataset.secId !== state.drag.secId);
+  for (const el of secs) {
+    const r = el.getBoundingClientRect();
+    if (y < r.top + r.height / 2) return { el, before: true };
+  }
+  const last = secs[secs.length - 1];
+  return last ? { el: last, before: false } : null;
+}
+
+function showDropLine({ el, before }) {
+  const r = el.getBoundingClientRect();
+  const y = before ? r.top - 8 : r.bottom + 8; // Mitte der 1rem-Lücke
+  Object.assign(secDropLine.style, {
+    display: 'block',
+    left: r.left + 'px',
+    width: r.width + 'px',
+    top: (y - 2) + 'px'
+  });
+}
+
+// Pro Ordner: nur das Ziehen am Header. Das Ablegen übernimmt initSectionDrop().
 export function attachSectionDrag(secEl, header, sec) {
   header.setAttribute('draggable', 'true');
 
@@ -59,37 +131,49 @@ export function attachSectionDrag(secEl, header, sec) {
     state.drag.secId = sec.id;
     secEl.classList.add('dragging-sec');
     e.dataTransfer.effectAllowed = 'move';
-  });
-  header.addEventListener('dragend', () => {
-    state.drag.secId = null;
-    document.querySelectorAll('.section').forEach(el =>
-      el.classList.remove('dragging-sec', 'sec-drop-above', 'sec-drop-below')
-    );
+    // Unsichtbares natives Bild, wir zeigen unseren eigenen Ghost
+    e.dataTransfer.setDragImage(blankDragImg, 0, 0);
+    showSecGhost(sec, e);
   });
 
-  secEl.addEventListener('dragover', e => {
-    if (!state.drag.secId || state.drag.secId === sec.id) return;
-    e.preventDefault();
-    document.querySelectorAll('.section').forEach(el =>
-      el.classList.remove('sec-drop-above', 'sec-drop-below')
-    );
-    const r = secEl.getBoundingClientRect();
-    secEl.classList.add(e.clientY < r.top + r.height / 2 ? 'sec-drop-above' : 'sec-drop-below');
+  header.addEventListener('dragend', () => {
+    state.drag.secId = null;
+    hideSecDrag();
+    document.querySelectorAll('.section.dragging-sec')
+      .forEach(el => el.classList.remove('dragging-sec'));
   });
-  secEl.addEventListener('dragleave', e => {
-    if (!secEl.contains(e.relatedTarget))
-      secEl.classList.remove('sec-drop-above', 'sec-drop-below');
-  });
-  secEl.addEventListener('drop', e => {
-    if (!state.drag.secId || state.drag.secId === sec.id) return;
+}
+
+// Einmalig am Container (überlebt jedes render())
+function initSectionDrop() {
+  const container = document.getElementById('dashboard');
+
+  container.addEventListener('dragover', e => {
+    if (!state.drag.secId) return;
     e.preventDefault();
-    secEl.classList.remove('sec-drop-above', 'sec-drop-below');
-    const fromIdx = state.sections.findIndex(s => s.id === state.drag.secId);
-    const r = secEl.getBoundingClientRect();
-    const insertBefore = e.clientY < r.top + r.height / 2;
+    e.dataTransfer.dropEffect = 'move';
+    const target = getSectionInsertion(container, e.clientY);
+    if (target) showDropLine(target); else secDropLine.style.display = 'none';
+  });
+
+  container.addEventListener('dragleave', e => {
+    if (!container.contains(e.relatedTarget)) secDropLine.style.display = 'none';
+  });
+
+  container.addEventListener('drop', e => {
+    if (!state.drag.secId) return;
+    e.preventDefault();
+    const target = getSectionInsertion(container, e.clientY);
+    const movedId = state.drag.secId;
+    state.drag.secId = null;
+    hideSecDrag();
+    if (!target) return;
+
+    const fromIdx = state.sections.findIndex(s => s.id === movedId);
+    if (fromIdx === -1) return;
     const [moved] = state.sections.splice(fromIdx, 1);
-    const newIdx = state.sections.findIndex(s => s.id === sec.id);
-    state.sections.splice(insertBefore ? newIdx : newIdx + 1, 0, moved);
+    const targetIdx = state.sections.findIndex(s => s.id === target.el.dataset.secId);
+    state.sections.splice(target.before ? targetIdx : targetIdx + 1, 0, moved);
     saveSectionOrder();
     rerender();
   });

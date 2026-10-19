@@ -145,8 +145,6 @@ body {
 }
 .section.drag-over { border-color: #888; }
 .section.dragging-sec { opacity: 0.4; }
-.section.sec-drop-above { border-top: 2px solid var(--text); }
-.section.sec-drop-below { border-bottom: 2px solid var(--text); }
 
 .section-header {
   display: flex;
@@ -624,4 +622,41 @@ kbd {
   width: 8px; height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+/* ─── Ordner verschieben: Ghost und Einfügelinie ─────────── */
+#sec-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  opacity: 0.9;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+#sec-ghost .sec-ghost-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#sec-ghost .sec-ghost-count { font-size: 11px; color: var(--muted); }
+
+#sec-drop-line {
+  position: fixed;
+  display: none;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--text);
+  pointer-events: none;
+  z-index: 9997;
 }
