@@ -8,9 +8,6 @@ Thumbs.db
 *.swp
 workspace.code-workspace
 
-# Node (falls später Tooling dazukommt)
-node_modules/
-
 # Store-Pakete und Signierschlüssel (Schlüssel NIE einchecken)
 *.zip
 *.crx
@@ -19,3 +16,9 @@ node_modules/
 # Lokale Sicherungen
 backup/
 *.bak
+
+# Sonstiges
+store listing/
+node_modules/
+tools/
+TODO.md

@@ -31,10 +31,13 @@ document.getElementById('btn-new-folder').addEventListener('click', () => {
   ], () => {
     const title = document.getElementById('inp-title').value.trim();
     if (!title) return;
-    chrome.bookmarks.create({ parentId: '2', title }, node => {
+    // Neue Ordner immer auf oberster Ebene (Lesezeichenleiste), nie in einem Unterordner
+    if (!state.rootIds.bar) return;
+    chrome.bookmarks.create({ parentId: state.rootIds.bar, title }, node => {
       state.sections.push({
         id: node.id,
         title: node.title,
+        pathParentId: null,
         color: COLORS[state.sections.length % COLORS.length],
         collapsed: true,
         bookmarks: []
@@ -42,6 +45,24 @@ document.getElementById('btn-new-folder').addEventListener('click', () => {
       render(state.currentFilter);
     });
   });
+});
+
+// ─── Fixierte Top-Bar und "Nach oben" ─────────────────────
+const topBar = document.querySelector('.top-bar');
+const btnTop = document.getElementById('btn-top');
+
+function onScroll() {
+  const y = window.scrollY;
+  topBar.classList.toggle('stuck', y > 20);   // dezente Trennlinie, sobald Inhalt darunter läuft
+  btnTop.classList.toggle('visible', y > 400); // Button erst nach etwas Scrollen
+}
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+btnTop.addEventListener('click', () => {
+  // Weiches Scrollen nur, wenn Animationen in den Einstellungen aktiv sind
+  const animated = document.getElementById('toggle-animations').checked;
+  window.scrollTo({ top: 0, behavior: animated ? 'smooth' : 'auto' });
 });
 
 // ─── Help Modal ───────────────────────────────────────────

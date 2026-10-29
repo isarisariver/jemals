@@ -1,5 +1,7 @@
 import { state } from './state.js';
 import { showModal, showConfirm } from './modal.js';
+import { openUrl } from './open.js';
+import { sectionLabel, removeSectionTree } from './tree.js';
 // t() kommt global aus i18n.js (klassisches Script)
 
 // ─── Kontextmenü ──────────────────────────────────────────
@@ -144,11 +146,11 @@ ctxDelete.addEventListener('click', () => {
 
   if (ctxTarget.type === 'folder') {
     showConfirm(
-      t('modal_delete_folder_title', sec.title),
+      t('modal_delete_folder_title', sectionLabel(sec)),
       t('modal_delete_folder_msg', sec.bookmarks.length),
       () => {
         chrome.bookmarks.removeTree(sec.id, () => {
-          state.sections = state.sections.filter(s => s.id !== sec.id);
+          removeSectionTree(sec.id); // inkl. Unterordner
           rerender();
         });
       }
@@ -170,7 +172,7 @@ ctxOpenAll.addEventListener('click', () => {
   if (!ctxTarget || ctxTarget.type !== 'folder') return;
   const sec = findSection(ctxTarget.secId);
   if (!sec) return;
-  sec.bookmarks.forEach(bm => window.open(bm.url, '_blank'));
+  sec.bookmarks.forEach(bm => openUrl(bm.url, { newTab: true }));
 });
 
 // ─── Ordner-Farbe ändern ──────────────────────────────────

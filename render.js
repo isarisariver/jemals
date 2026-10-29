@@ -2,6 +2,8 @@ import { state } from './state.js';
 import { showCtxMenu } from './context-menu.js';
 import { setFaviconWithFallback } from './icons.js';
 import { showTooltip, hideTooltip, positionTooltip } from './tooltip.js';
+import { openUrl } from './open.js';
+import { sectionLabel } from './tree.js';
 import { attachSectionDrag, attachHeaderDrop, attachItemDrag, attachGridDrop } from './drag.js';
 // t() kommt global aus i18n.js
 
@@ -74,7 +76,7 @@ function buildHeader(sec, secEl) {
 
   const title = document.createElement('span');
   title.className = 'section-title';
-  title.textContent = sec.title;
+  title.textContent = sectionLabel(sec);
 
   const count = document.createElement('span');
   count.className = 'section-count';
@@ -106,11 +108,11 @@ function buildHeader(sec, secEl) {
   return header;
 }
 
-// readonly = Eintrag aus dem Verlauf: kein Drag, kein Kontextmenü
-function buildItem(bm, sec, readonly = false) {
+// fromRecent = Eintrag aus dem Verlauf: ziehbar (wird beim Ablegen zum Lesezeichen), aber kein Kontextmenü
+function buildItem(bm, sec, fromRecent = false) {
   const item = document.createElement('div');
   item.className = 'item';
-  if (!readonly) item.setAttribute('draggable', 'true');
+  item.setAttribute('draggable', 'true');
   item.dataset.bmId = bm.id;
 
   const iconWrap = document.createElement('div');
@@ -134,16 +136,17 @@ function buildItem(bm, sec, readonly = false) {
   item.addEventListener('mousedown', e => { clickStart = Date.now(); startX = e.clientX; startY = e.clientY; });
   item.addEventListener('click', e => {
     if (Math.hypot(e.clientX - startX, e.clientY - startY) > 5 || Date.now() - clickStart > 300) return;
-    window.open(bm.url, state.openInNewTab ? '_blank' : '_self');
+    openUrl(bm.url, { newTab: state.openInNewTab });
   });
 
-  if (!readonly) {
+  if (!fromRecent) {
     item.addEventListener('contextmenu', e => {
       hideTooltip();
       showCtxMenu(e, { type: 'bookmark', secId: sec.id, bmId: bm.id });
     });
-    attachItemDrag(item, bm);
   }
+
+  attachItemDrag(item, bm);
   return item;
 }
 

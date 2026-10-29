@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { render } from './render.js';
+import { sectionLabel } from './tree.js';
 import { hasHistoryPermission, requestHistoryPermission, removeHistoryPermission, refreshRecent } from './recent.js';
 // setLang() und applyTranslations() kommen global aus i18n.js
 
@@ -112,7 +113,7 @@ toggleRecent.addEventListener('change', async () => {
 const defaultFolderSelect = document.getElementById('settings-default-folder');
 
 export function applyDefaultFolder(id) {
-  state.defaultFolder = id || '1';
+  state.defaultFolder = id || state.rootIds.bar;
   // Beim Start nur diesen Ordner aufklappen
   state.sections.forEach(s => { s.collapsed = s.id !== state.defaultFolder; });
 }
@@ -125,7 +126,7 @@ function fillDefaultFolderSelect() {
     .forEach(sec => {
       const opt = document.createElement('option');
       opt.value = sec.id;
-      opt.textContent = sec.title;
+      opt.textContent = sectionLabel(sec);
       defaultFolderSelect.appendChild(opt);
     });
   defaultFolderSelect.value = state.defaultFolder;
@@ -170,7 +171,7 @@ function openSettings() {
     const dot = document.createElement('span');
     dot.className = 'settings-folder-dot';
     dot.style.background = sec.color;
-    name.append(dot, document.createTextNode(' ' + sec.title));
+    name.append(dot, document.createTextNode(' ' + sectionLabel(sec)));
 
     const label = document.createElement('label');
     label.className = 'switch';

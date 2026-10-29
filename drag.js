@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { getFavicon } from './icons.js';
 import { hideTooltip } from './tooltip.js';
-import { saveSectionOrder } from './tree.js';
+import { saveSectionOrder, sectionLabel } from './tree.js';
 
 // render() wird von init.js übergeben (vermeidet zirkulären Import)
 let render = () => {};
@@ -11,23 +11,45 @@ export function initDrag({ render: renderFn }) {
 }
 const rerender = () => render(state.currentFilter);
 
+// Transparentes 1x1-GIF, vorgeladen, als unsichtbares natives Drag-Bild
+const blankDragImg = new Image();
+blankDragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 // ─── Drag Ghost ───────────────────────────────────────────
 const dragGhost = document.createElement('div');
 dragGhost.id = 'drag-ghost';
 dragGhost.innerHTML = '<img id="ghost-img"><span id="ghost-label"></span>';
 document.body.appendChild(dragGhost);
 
-function showGhost(bm, e) {
-  document.getElementById('ghost-img').src = getFavicon(bm.url);
+function showGhost(bm, e, iconSrc) {
+  document.getElementById('ghost-img').src = iconSrc;
   document.getElementById('ghost-label').textContent = bm.label;
-  dragGhost.style.display = 'flex';
-  moveGhost(e);
+  dragGhost.style.display = 'none';
+  moveGhost(e); // zeigt den Ghost erst bei gültiger Position
+  // Position auch über Header, Lücken und anderen Elementen nachführen
+  document.addEventListener('dragover', moveGhost, true);
 }
 function moveGhost(e) {
+  // Manche Drag-Events kommen ohne gültige Position (0/0): ignorieren, sonst
+  // erscheint der Ghost kurz in der Ecke und springt dann zum Zeiger.
+  if (e.clientX === 0 && e.clientY === 0) return;
   dragGhost.style.left = (e.clientX + 16) + 'px';
   dragGhost.style.top  = (e.clientY + 16) + 'px';
+  dragGhost.style.display = 'flex';
 }
-function hideGhost() { dragGhost.style.display = 'none'; }
+function hideGhost() {
+  dragGhost.style.display = 'none';
+  document.removeEventListener('dragover', moveGhost, true);
+}
+
+// Icon für den Ghost aus der Kachel übernehmen (echtes Icon, eigenes Icon oder Initialen),
+// statt es neu zu laden: sonst erscheint für unbekannte Seiten Chromes Standard-Globus.
+function ghostIconFor(item, bm) {
+  const canvas = item.querySelector('.item-icon canvas'); // Initialen-Fallback
+  if (canvas) return canvas.toDataURL();
+  const img = item.querySelector('.item-icon img');
+  return (img && img.src) ? img.src : getFavicon(bm.url);
+}
 
 // ─── Helpers ──────────────────────────────────────────────
 function clearIndicators() {
@@ -44,20 +66,38 @@ function getDropTarget(grid, x, y) {
   return null;
 }
 
-// Nimmt das gezogene Bookmark aus seiner aktuellen Sektion und gibt es zurück.
+// Nimmt das gezogene Lesezeichen aus seiner Sektion.
+// Stammt es aus "Zuletzt besucht", ist es noch kein Lesezeichen: dann wird nichts
+// entfernt, und der Aufrufer legt es neu an (isNew = true).
 function takeDraggedBookmark() {
   for (const s of state.sections) {
     const idx = s.bookmarks.findIndex(b => b.id === state.drag.itemId);
-    if (idx !== -1) return s.bookmarks.splice(idx, 1)[0];
+    if (idx !== -1) return { bm: s.bookmarks.splice(idx, 1)[0], isNew: false };
   }
+  const recent = state.recent.find(r => r.id === state.drag.itemId);
+  if (recent) return { bm: { label: recent.label, url: recent.url }, isNew: true };
   return null;
 }
 
-// ─── Sektionen umsortieren (Drag am Header) ───────────────
-// Transparentes 1x1-GIF, vorgeladen, als unsichtbares natives Drag-Bild
-const blankDragImg = new Image();
-blankDragImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+// Legt ein neues Lesezeichen in Chrome an. Erst im Callback bekommt es seine echte id.
+// Schlägt das Anlegen fehl, wird der Eintrag wieder aus der Sektion entfernt.
+function createBookmark(sec, bm, chromeIndex) {
+  const details = { parentId: sec.id, title: bm.label, url: bm.url };
+  if (chromeIndex != null) details.index = chromeIndex;
+  chrome.bookmarks.create(details, node => {
+    if (chrome.runtime.lastError || !node) {
+      console.warn('Jemals: Lesezeichen konnte nicht angelegt werden:',
+        chrome.runtime.lastError && chrome.runtime.lastError.message);
+      sec.bookmarks = sec.bookmarks.filter(b => b !== bm);
+    } else {
+      bm.id = node.id;
+      bm.label = node.title || node.url;
+    }
+    rerender();
+  });
+}
 
+// ─── Sektionen umsortieren (Drag am Header) ───────────────
 // Ghost, der dem Mauszeiger folgt
 const secGhost = document.createElement('div');
 secGhost.id = 'sec-ghost';
@@ -81,7 +121,7 @@ function showSecGhost(sec, e) {
   secGhost.style.borderLeftColor = sec.color;
   const title = document.createElement('span');
   title.className = 'sec-ghost-title';
-  title.textContent = sec.title;
+  title.textContent = sectionLabel(sec);
   const count = document.createElement('span');
   count.className = 'sec-ghost-count';
   count.textContent = sec.bookmarks.length;
@@ -193,11 +233,16 @@ export function attachHeaderDrop(header, sec) {
     if (state.drag.secId || !state.drag.itemId) return;
     e.preventDefault();
     header.classList.remove('drag-over-bm');
-    const bm = takeDraggedBookmark();
-    if (!bm) return;
+    const taken = takeDraggedBookmark();
+    if (!taken) return;
+    const { bm, isNew } = taken;
     sec.bookmarks.push(bm);
-    chrome.bookmarks.move(bm.id, { parentId: sec.id, index: sec.bookmarks.length - 1 });
-    rerender();
+    if (isNew) {
+      createBookmark(sec, bm, null); // ans Ende; Anzeige nach dem Anlegen
+    } else {
+      chrome.bookmarks.move(bm.id, { parentId: sec.id, index: sec.bookmarks.length - 1 });
+      rerender();
+    }
   });
 }
 
@@ -208,11 +253,9 @@ export function attachItemDrag(item, bm) {
     state.drag.itemId = bm.id;
     item.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    // Unsichtbares natives Ghost-Bild
-    const blank = document.createElement('canvas');
-    blank.width = 1; blank.height = 1;
-    e.dataTransfer.setDragImage(blank, 0, 0);
-    showGhost(bm, e);
+    // Unsichtbares natives Drag-Bild, wir zeigen unseren eigenen Ghost
+    e.dataTransfer.setDragImage(blankDragImg, 0, 0);
+    showGhost(bm, e, ghostIconFor(item, bm));
   });
   item.addEventListener('dragend', () => {
     item.classList.remove('dragging');
@@ -240,8 +283,9 @@ export function attachGridDrop(grid, sec) {
     if (state.drag.secId) return;
     e.preventDefault();
     clearIndicators();
-    const bm = takeDraggedBookmark();
-    if (!bm) return;
+    const taken = takeDraggedBookmark();
+    if (!taken) return;
+    const { bm, isNew } = taken;
 
     const hit = getDropTarget(grid, e.clientX, e.clientY);
     if (hit) {
@@ -250,7 +294,7 @@ export function attachGridDrop(grid, sec) {
     } else {
       sec.bookmarks.push(bm);
     }
-    const newIndex = sec.bookmarks.findIndex(b => b.id === bm.id);
+    const newIndex = sec.bookmarks.indexOf(bm);
 
     // Echte Chrome-Kinder abfragen, weil ausgeblendete Unterordner die
     // Chrome-Indizes gegenüber unserem Array verschieben.
@@ -268,8 +312,9 @@ export function attachGridDrop(grid, sec) {
         const lastIdx = lastBmId ? children.findIndex(c => c.id === lastBmId) : -1;
         chromeIndex = lastIdx !== -1 ? lastIdx + 1 : children.length;
       }
-      chrome.bookmarks.move(bm.id, { parentId: sec.id, index: chromeIndex });
+      if (isNew) createBookmark(sec, bm, chromeIndex);
+      else chrome.bookmarks.move(bm.id, { parentId: sec.id, index: chromeIndex });
     });
-    rerender();
+    if (!isNew) rerender(); // Neue Einträge werden erst nach dem Anlegen angezeigt
   });
 }

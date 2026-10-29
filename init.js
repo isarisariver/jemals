@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { render } from './render.js';
 import { initContextMenu } from './context-menu.js';
 import { initDrag } from './drag.js';
-import { transformTree, applySectionOrder } from './tree.js';
+import { transformTree, applySectionOrder, findRootFolders } from './tree.js';
 import { applyTheme, applyLanguage, applyClockFormat, applyOpenInNewTab, applyHiddenFolders, applyDefaultFolder, applyShowRecent, applyAnimations } from './settings.js';
 import './topbar.js'; // registriert Uhr, Suche, Shortcuts, Hilfe, "Neuer Ordner"
 
@@ -11,6 +11,7 @@ initContextMenu({ render });
 initDrag({ render });
 
 chrome.bookmarks.getTree(tree => {
+  state.rootIds = findRootFolders(tree);
   state.sections = transformTree(tree);
   chrome.storage.local.get(
     ['sectionOrder', 'theme', 'language', 'customIcons', 'customColors', 'clockFormat', 'openInNewTab', 'hiddenFolders', 'defaultFolder', 'showRecent', 'animationsEnabled'],

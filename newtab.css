@@ -63,18 +63,26 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text);
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1.25rem 2rem 2rem; /* oben weniger: die fixierte Top-Bar bringt eigenes Padding mit */
 }
 
 #app { max-width: 1100px; margin: 0 auto; }
 
 /* ─── Top Bar ───────────────────────────────────────────── */
 .top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 2rem;
+  padding: 14px 0;
+  margin-bottom: 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.2s ease;
 }
+.top-bar.stuck { border-bottom-color: var(--border); }
 
 .clock {
   font-size: 18px;
@@ -660,3 +668,28 @@ kbd {
   pointer-events: none;
   z-index: 9997;
 }
+
+/* ─── Nach-oben-Button ──────────────────────────────────── */
+#btn-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 90;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s, background 0.2s ease;
+}
+#btn-top.visible { opacity: 1; visibility: visible; transform: none; }
+#btn-top:hover { background: var(--border); }

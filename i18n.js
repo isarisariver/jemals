@@ -2,6 +2,7 @@
 const STRINGS = {
   de: {
     search_placeholder: 'Lesezeichen durchsuchen…',
+    back_to_top: 'Nach oben',
     new_folder: '+ Neuer Ordner',
     loading: 'Lesezeichen werden geladen…',
     empty_folder: 'Leer — Lesezeichen hierher ziehen',
@@ -69,6 +70,7 @@ const STRINGS = {
   },
   en: {
     search_placeholder: 'Search bookmarks…',
+    back_to_top: 'Back to top',
     new_folder: '+ New Folder',
     loading: 'Loading bookmarks…',
     empty_folder: 'Empty — drag bookmarks here',
@@ -136,6 +138,7 @@ const STRINGS = {
   },
   fr: {
     search_placeholder: 'Rechercher des favoris…',
+    back_to_top: 'Haut de page',
     new_folder: '+ Nouveau dossier',
     loading: 'Chargement des favoris…',
     empty_folder: 'Vide — faites glisser des favoris ici',
@@ -203,6 +206,7 @@ const STRINGS = {
   },
   es: {
     search_placeholder: 'Buscar marcadores…',
+    back_to_top: 'Volver arriba',
     new_folder: '+ Nueva carpeta',
     loading: 'Cargando marcadores…',
     empty_folder: 'Vacío — arrastra marcadores aquí',
@@ -292,6 +296,8 @@ function t(key, ...args) {
 
 function applyTranslations() {
   document.getElementById('search').placeholder = t('search_placeholder');
+  const btnTop = document.getElementById('btn-top');
+  if (btnTop) { btnTop.title = t('back_to_top'); btnTop.setAttribute('aria-label', t('back_to_top')); }
   document.getElementById('btn-new-folder').textContent = t('new_folder');
   document.getElementById('ctx-rename').textContent = t('ctx_rename');
   document.getElementById('ctx-edit-url').textContent = t('ctx_edit_url');

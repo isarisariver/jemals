@@ -10,7 +10,8 @@ const state = {
   hiddenFolders: [],   // ids der ausgeblendeten Ordner (Setting)
   showRecent: false,   // Sektion "Zuletzt besucht" anzeigen (Setting)
   recent: [],          // [{ id, label, url }] aus chrome.history
-  defaultFolder: '1',  // id des Ordners, der beim Start aufgeklappt ist ('1' = Bookmarks Bar)
+  defaultFolder: null, // id des Ordners, der beim Start aufgeklappt ist (null = Lesezeichenleiste)
+  rootIds: { bar: null, other: null }, // ids der Chrome-Wurzelordner (siehe tree.js)
   drag: {
     itemId: null,      // id des gerade gezogenen Bookmarks
     secId: null        // id der gerade gezogenen Sektion

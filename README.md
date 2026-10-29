@@ -55,6 +55,7 @@ Alle Skripte sind ES-Module, Einstiegspunkt ist `init.js`. `i18n.js` ist ein kla
 | `tree.js` | Lesezeichen-Baum → Sektionen, Sektionsreihenfolge |
 | `icons.js` | Favicons und Initialen-Fallback |
 | `recent.js` | „Zuletzt besucht“ und die optionale Berechtigung |
+| `open.js` | Lesezeichen öffnen (auch `chrome://`-Adressen) |
 | `tooltip.js` | Hover-Info |
 | `i18n.js` | Übersetzungen |
 
