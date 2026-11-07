@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Jemals",
+    "description": "Name der Erweiterung (Eigenname, in allen Sprachen gleich)"
+  },
+  "extDescription": {
+    "message": "Tu nueva pestaña como panel de marcadores: carpetas, búsqueda, arrastrar y soltar, temas. Todo queda en local, sin cuenta.",
+    "description": "Kurzbeschreibung für Chrome und den Web Store (max. 132 Zeichen)"
+  }
+}

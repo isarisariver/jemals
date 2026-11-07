@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Jemals",
+    "description": "Name der Erweiterung (Eigenname, in allen Sprachen gleich)"
+  },
+  "extDescription": {
+    "message": "Your new tab as a bookmark dashboard: folders, search, drag & drop, themes. Everything stays local, no account needed.",
+    "description": "Kurzbeschreibung für Chrome und den Web Store (max. 132 Zeichen)"
+  }
+}

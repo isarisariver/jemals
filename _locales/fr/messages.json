@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "Jemals",
+    "description": "Name der Erweiterung (Eigenname, in allen Sprachen gleich)"
+  },
+  "extDescription": {
+    "message": "Votre nouvel onglet en tableau de bord de favoris : dossiers, recherche, glisser-déposer, thèmes. Tout reste local, sans compte.",
+    "description": "Kurzbeschreibung für Chrome und den Web Store (max. 132 Zeichen)"
+  }
+}
