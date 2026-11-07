@@ -1,66 +1,40 @@
 # Jemals
 
-Chrome-Erweiterung (Manifest V3), die den neuen Tab durch ein Dashboard für deine Lesezeichen ersetzt.
-*„Alle Lesezeichen, die du jemals gespeichert hast.“*
+Jemals is a Chrome extension (Manifest V3) that replaces the new tab page with a dashboard for your bookmarks. *"Jemals"* is German for *"ever"*: all the bookmarks you have ever saved, in one place.
 
-## Funktionen
+It works with your regular Chrome bookmarks. There is nothing to import: add new bookmarks as usual (the star in the address bar or Ctrl/Cmd+D) and they show up in your next new tab. Whatever you rename, move, or delete in Jemals applies directly in Chrome.
 
-- Lesezeichen-Ordner als Sektionen, immer nur ein Ordner gleichzeitig offen (Accordion)
-- Drag & Drop für Lesezeichen und Ordner, Rechtsklick-Menü (umbenennen, URL ändern, Icon ändern, sortieren, Farbe, alle öffnen, löschen)
-- Suche (`/` fokussiert, `Esc` leert)
-- Eigene Icons pro Lesezeichen, Fallback mit farbigen Initialen
-- Optional: „Zuletzt besucht“ (zuletzt besuchte Websites)
-- Themes: Light, Slate, Warm, Black
-- Sprachen: Deutsch, Englisch, Französisch, Spanisch (automatisch oder manuell)
-- Einstellungen: Uhrzeitformat, Links im gleichen/neuen Tab, Standard-Ordner, Ordner ausblenden, Animationen
+## Features
 
-## Installation (Entwicklung)
+- Bookmark folders as sections, one open at a time while the others stay collapsed; subfolders are shown with their path (for example "Development – Tools")
+- Drag & drop for bookmarks and folders, with a clear drop indicator
+- Fast search across all bookmarks (`/` focuses the search box, `Esc` clears it); the search bar stays visible while scrolling
+- Right-click menu: rename, change URL, set a custom icon, sort a folder alphabetically, change the folder color, open all bookmarks of a folder, delete
+- Custom icons per bookmark; colored initials when no icon is available
+- Optional "Recently visited" section with your ten latest websites; drag one into a folder to save it as a bookmark
+- Four themes: Light, Slate, Warm, and Black
+- English, German, French, and Spanish, detected automatically or chosen manually
+- Settings for clock format, opening links in the same or a new tab, default folder, hidden folders, and animations
+- Tested with more than 5,000 bookmarks
 
-1. Dieses Repository klonen oder herunterladen.
-2. In Chrome `chrome://extensions` öffnen und oben rechts den **Entwicklermodus** aktivieren.
-3. **Entpackte Erweiterung laden** wählen und den Projektordner auswählen.
-4. Nach Änderungen an `manifest.json` die Erweiterung in `chrome://extensions` neu laden (der Pfeil an der Karte).
+## Privacy
 
-## Datenschutz
+Everything stays local in your browser. Jemals has no account, no servers of its own, no analytics, no tracking, and no ads, and it does not load remote code.
 
-Alles bleibt lokal im Browser.
+- **Bookmarks** are read through Chrome's `bookmarks` API and only modified when you trigger it yourself.
+- **Settings and custom icons** are stored in `chrome.storage.local` on your device and are not synced.
+- **Website icons** come from Chrome's own local favicon storage (`_favicon`). Jemals sends no requests to any server for this and passes no addresses to Google or other third parties.
+- **Browsing history** is read only if you enable "Recently visited". The data stays in memory, is not stored or transmitted, and the permission is released when you switch the feature off.
 
-- **Favicons** kommen aus Chromes eigenem Icon-Cache (`_favicon`-API). Es werden keine Domains an Google oder andere Dritte gesendet.
-- **Einstellungen und eigene Icons** liegen in `chrome.storage.local`.
-- **Verlauf** (`history`) ist eine *optionale* Berechtigung. Chrome fragt erst, wenn „Zuletzt besucht“ aktiviert wird, und die Berechtigung wird beim Ausschalten wieder abgegeben.
+The full policy is in [store/privacy-policy.md](store/privacy-policy.md).
 
-### Berechtigungen
+## Permissions
 
-| Berechtigung | Wofür |
+| Permission | Why it is needed |
 |---|---|
-| `bookmarks` | Lesezeichen lesen, verschieben, umbenennen, löschen |
-| `storage` | Einstellungen, eigene Icons, Ordnerfarben und -reihenfolge |
-| `favicon` | Website-Icons lokal aus Chrome laden |
-| `history` (optional) | Nur für „Zuletzt besucht“ |
+| `bookmarks` | Read your bookmark tree to display it, and rename, move, sort, create, and delete bookmarks and folders when you ask for it |
+| `storage` | Store your settings, folder order and colors, and custom icons locally |
+| `favicon` | Show website icons using Chrome's local favicon interface |
+| `history` (optional) | Requested only when you enable "Recently visited" to show your latest websites |
 
-## Projektstruktur
-
-Alle Skripte sind ES-Module, Einstiegspunkt ist `init.js`. `i18n.js` ist ein klassisches Script mit globalem `t()`.
-
-| Datei | Inhalt |
-|---|---|
-| `manifest.json`, `newtab.html`, `newtab.css` | Manifest, Seite, Styles |
-| `init.js` | Start: Lesezeichen und Einstellungen laden, Module verdrahten |
-| `state.js` | geteilter Zustand (Sektionen, Filter, Icons, Einstellungen, Drag) |
-| `render.js` | Aufbau der Oberfläche, Accordion-Animation |
-| `drag.js` | Drag & Drop |
-| `context-menu.js`, `modal.js` | Rechtsklick-Menü und Dialoge |
-| `settings.js` | Einstellungsfenster |
-| `topbar.js` | Uhr, Suche, „Neuer Ordner“, Hilfe, Tastenkürzel |
-| `tree.js` | Lesezeichen-Baum → Sektionen, Sektionsreihenfolge |
-| `icons.js` | Favicons und Initialen-Fallback |
-| `recent.js` | „Zuletzt besucht“ und die optionale Berechtigung |
-| `open.js` | Lesezeichen öffnen (auch `chrome://`-Adressen) |
-| `tooltip.js` | Hover-Info |
-| `i18n.js` | Übersetzungen |
-
-Icons der Erweiterung liegen unter `icons/` (16, 48, 128 px), das Tab-Icon ist `favicon.svg`.
-
-## Geplantes
-
-Siehe [TODO.md](TODO.md).
+Jemals also overrides the new tab page. That is its single purpose.
